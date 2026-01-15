@@ -939,7 +939,7 @@ const EMPLOYEES = {
     'Ocean-Chuu-T24pkC8M9GZ6NWAV': 'Ocean Chuu',
     'Kuan-3x8BRtq6EQfMPSHd': 'Kuan',
     'Ghan-bT7EYUd6QRgsC4Vk': 'Ghan',
-    'Grace-L59ZQj8SnPYB2vWX': 'Grace',
+    'Michelle-Tew-DBRT2EC3S9kqKhlx': 'Michelle Tew',
     'Ko-Gyi-sPTZ1Vg6YxJWhb8k': 'Ko Gyi',
     'Zue-Hlang-Htoo-V3CSX4qL8K9WuZte': 'Zue Hlang Htoo',
     'Tun-Myint-Aung-Q7AfJNbXzt3EVc46': 'Tun Myint Aung'
@@ -959,9 +959,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updateDateInfo();
     updateUnitOptions();
     
-    // Set today's date as default for estimated delivery
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('estimatedDelivery').value = today;
+    // REMOVED: Set today's date as default for estimated delivery
+    // const today = new Date().toISOString().split('T')[0];
+    // document.getElementById('estimatedDelivery').value = today;
     
     // Add event listener to unit select
     document.getElementById('unit').addEventListener('change', validateUnit);
@@ -2036,8 +2036,9 @@ function resetForm() {
     document.getElementById('submitBtn').disabled = true;
     document.getElementById('submitBtn').innerHTML = 'Submit Drawing Information';
     
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('estimatedDelivery').value = today;
+    // REMOVED: Set today's date as default for estimated delivery
+    // const today = new Date().toISOString().split('T')[0];
+    // document.getElementById('estimatedDelivery').value = today;
     
     currentQRDataUrl = null;
     trailingSpaceFields = [];
