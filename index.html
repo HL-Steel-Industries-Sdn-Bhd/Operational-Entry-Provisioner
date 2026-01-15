@@ -17,6 +17,7 @@
         --error-red: #f44336;
         --rd-green: #81c784;
         --stock-blue: #64b5f6;
+        --sample-purple: #ba68c8; /* 新增：Sample 颜色 */
     }
     
     * { 
@@ -215,6 +216,11 @@
     .stock-field {
         background-color: rgba(100, 181, 246, 0.1) !important;
         border-left: 4px solid var(--stock-blue) !important;
+    }
+    
+    .sample-field {
+        background-color: rgba(186, 104, 200, 0.1) !important;
+        border-left: 4px solid var(--sample-purple) !important;
     }
     
     .auto-item-info {
@@ -592,14 +598,14 @@
                 <div class="form-group">
                     <label for="salesOrder" class="required">Sales Order No.</label>
                     <input type="text" id="salesOrder" name="salesOrder" required 
-                           placeholder="e.g., 009999, 999999 (R&D), or 000000 (Stock)"
-                           onblur="validateSalesOrderOnBlur(); checkRDStockItemNo(); validateSalesOrderTrailingSpace(this, true)"
+                           placeholder="e.g., 009999, 999999 (R&D), 000000 (Stock), or 888888 (Sample)"
+                           onblur="validateSalesOrderOnBlur(); checkSpecialItemNo(); validateSalesOrderTrailingSpace(this, true)"
                            oninput="updateCombinedCounter(); validateSalesOrderTrailingSpace(this)"
                            onchange="handleSalesOrderType()">
                     <div class="format-info">
                         <div class="format-text">
                             Format: 6 digits + optional letter<br>
-                            Special: 999999=R&D, 000000=Stock
+                            Special: 999999=R&D, 000000=Stock, 888888=Sample
                         </div>
                         <div class="combined-counter" id="salesOrderCombinedCounter"></div>
                     </div>
@@ -888,7 +894,7 @@
 
 <script>
 // GAS URL - Will be updated when you deploy
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwB1r4EHW4pIBfhn27KyZ9eCoW3cqYAZTrtD-5ZtZRs7qfcYx_LTqlPVdXIRsQk5rVIIQ/exec'; // Replace with your GAS web app URL
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyUnXboNyoIFEZWd8lG8ue3C8kEHPb_t2UHSckPse212RVv5wkvkZLyIZ4qoOQRqSp0/exec'; // Replace with your GAS web app URL
 
 // Work Flow Google Sheets IDs
 const WORKFLOW_SHEETS = {
@@ -933,7 +939,7 @@ const EMPLOYEES = {
     'Ocean-Chuu-T24pkC8M9GZ6NWAV': 'Ocean Chuu',
     'Kuan-3x8BRtq6EQfMPSHd': 'Kuan',
     'Ghan-bT7EYUd6QRgsC4Vk': 'Ghan',
-    'Michelle-Tew-DBRT2EC3S9kqKhlx': 'Michelle Tew',
+    'Grace-L59ZQj8SnPYB2vWX': 'Grace',
     'Ko-Gyi-sPTZ1Vg6YxJWhb8k': 'Ko Gyi',
     'Zue-Hlang-Htoo-V3CSX4qL8K9WuZte': 'Zue Hlang Htoo',
     'Tun-Myint-Aung-Q7AfJNbXzt3EVc46': 'Tun Myint Aung'
@@ -947,7 +953,7 @@ let scannerContext = null;
 let currentQRDataUrl = null;
 let duplicateCheckData = null;
 let trailingSpaceFields = [];
-let isRDStockDuplicate = false;
+let isSpecialDuplicate = false;
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDateInfo();
@@ -1085,14 +1091,14 @@ function updateDateInfo() {
     }
 }
 
-// NEW: Handle Sales Order Type (R&D or Stock)
+// NEW: Handle Sales Order Type (R&D, Stock, or Sample)
 function handleSalesOrderType() {
     const salesOrderInput = document.getElementById('salesOrder');
     const soValue = salesOrderInput.value.trim();
     const soTypeInfo = document.getElementById('soTypeInfo');
     
     // Remove previous styling
-    salesOrderInput.classList.remove('rd-field', 'stock-field');
+    salesOrderInput.classList.remove('rd-field', 'stock-field', 'sample-field');
     soTypeInfo.style.display = 'none';
     
     if (soValue === '999999') {
@@ -1105,20 +1111,25 @@ function handleSalesOrderType() {
         soTypeInfo.innerHTML = '📦 <strong>Stock Mode</strong> - Item No. will be checked against 2026 Stock List';
         soTypeInfo.style.display = 'block';
         soTypeInfo.style.borderLeftColor = 'var(--stock-blue)';
+    } else if (soValue === '888888') {
+        salesOrderInput.classList.add('sample-field');
+        soTypeInfo.innerHTML = '🧪 <strong>Sample Mode</strong> - Item No. will be checked against 2026 Sample List';
+        soTypeInfo.style.display = 'block';
+        soTypeInfo.style.borderLeftColor = 'var(--sample-purple)';
     }
 }
 
-// NEW: Check and auto-fill next Item No. for R&D/Stock
-async function checkRDStockItemNo() {
+// NEW: Check and auto-fill next Item No. for R&D/Stock/Sample
+async function checkSpecialItemNo() {
     const salesOrder = document.getElementById('salesOrder').value.trim();
     const itemNoInput = document.getElementById('itemNo');
     const autoItemInfo = document.getElementById('autoItemInfo');
     
     // Remove previous styling
-    itemNoInput.classList.remove('rd-field', 'stock-field');
+    itemNoInput.classList.remove('rd-field', 'stock-field', 'sample-field');
     autoItemInfo.style.display = 'none';
     
-    if (salesOrder === '999999' || salesOrder === '000000') {
+    if (salesOrder === '999999' || salesOrder === '000000' || salesOrder === '888888') {
         try {
             // Show loading
             autoItemInfo.innerHTML = '⏳ Getting next Item No...';
@@ -1138,9 +1149,12 @@ async function checkRDStockItemNo() {
                 if (salesOrder === '999999') {
                     itemNoInput.classList.add('rd-field');
                     autoItemInfo.style.borderLeftColor = 'var(--rd-green)';
-                } else {
+                } else if (salesOrder === '000000') {
                     itemNoInput.classList.add('stock-field');
                     autoItemInfo.style.borderLeftColor = 'var(--stock-blue)';
+                } else if (salesOrder === '888888') {
+                    itemNoInput.classList.add('sample-field');
+                    autoItemInfo.style.borderLeftColor = 'var(--sample-purple)';
                 }
                 
                 // Show info message
@@ -1310,8 +1324,8 @@ function validateSalesOrderOnBlur() {
         return true;
     }
     
-    // Allow special R&D and Stock numbers
-    if (value === '999999' || value === '000000') {
+    // Allow special R&D, Stock, and Sample numbers
+    if (value === '999999' || value === '000000' || value === '888888') {
         input.classList.add('valid');
         input.classList.remove('invalid');
         return true;
@@ -1326,7 +1340,7 @@ function validateSalesOrderOnBlur() {
     } else {
         input.classList.add('invalid');
         input.classList.remove('valid');
-        alert('Invalid Sales Order No. format.\n\nPlease enter:\n• 6 digits (e.g., 009999)\n• OR 6 digits + 1 uppercase letter (e.g., 009999A)\n• OR 999999 for R&D\n• OR 000000 for Stock\n\nExamples: 123456, 123456A, 999999, 000000');
+        alert('Invalid Sales Order No. format.\n\nPlease enter:\n• 6 digits (e.g., 009999)\n• OR 6 digits + 1 uppercase letter (e.g., 009999A)\n• OR 999999 for R&D\n• OR 000000 for Stock\n• OR 888888 for Sample\n\nExamples: 123456, 123456A, 999999, 000000, 888888');
         return false;
     }
 }
@@ -1769,16 +1783,26 @@ function showDuplicateModal(duplicateResult) {
     const soBase = soRaw.replace(/[A-Z]$/, '');
     document.getElementById('duplicateCombination').textContent = `${soBase} + ${duplicateCheckData.itemNo}`;
     
-    // Check if it's an R&D/Stock duplicate
-    if (duplicateResult.rdStockDuplicate) {
-        document.getElementById('duplicateModalTitle').textContent = '⚠️ Duplicate in R&D/Stock List';
+    // Check if it's a special type duplicate (R&D/Stock/Sample)
+    if (duplicateResult.specialDuplicate) {
+        document.getElementById('duplicateModalTitle').textContent = `⚠️ Duplicate in ${duplicateResult.listName}`;
         document.getElementById('duplicateModalMessage').textContent = duplicateResult.message;
         document.getElementById('duplicateListInfo').style.display = 'block';
         document.getElementById('duplicateListName').textContent = duplicateResult.listName;
+        
+        let noteText = '';
+        if (duplicateResult.type === 'R&D') {
+            noteText = 'Note: R&D (999999) items must have unique Item Nos.';
+        } else if (duplicateResult.type === 'Stock') {
+            noteText = 'Note: Stock (000000) items must have unique Item Nos.';
+        } else if (duplicateResult.type === 'Sample') {
+            noteText = 'Note: Sample (888888) items must have unique Item Nos.';
+        }
+        
         document.getElementById('duplicateNote').innerHTML = 
-            '<span style="font-size: 20px; margin-right: 5px;">ⓘ</span>' +
-            'Note: R&D (999999) and Stock (000000) items must have unique Item Nos.';
-        isRDStockDuplicate = true;
+            `<span style="font-size: 20px; margin-right: 5px;">ⓘ</span>${noteText}`;
+        
+        isSpecialDuplicate = true;
     } else {
         document.getElementById('duplicateModalTitle').textContent = '⚠️ Duplicate Entry Found';
         document.getElementById('duplicateModalMessage').textContent = 'The following combination already exists in the Collection of Operational Entry Form:';
@@ -1786,7 +1810,7 @@ function showDuplicateModal(duplicateResult) {
         document.getElementById('duplicateNote').innerHTML = 
             '<span style="font-size: 20px; margin-right: 5px;">ⓘ</span>' +
             'Note: SO numbers with different trailing letters (e.g., 009999 and 009999A) are considered the same.';
-        isRDStockDuplicate = false;
+        isSpecialDuplicate = false;
     }
     
     // Show modal
@@ -1819,9 +1843,20 @@ function cancelDuplicateSubmission() {
     document.getElementById('submitBtn').innerHTML = 'Submit Drawing Information';
     
     // Show info message
-    const message = isRDStockDuplicate ? 
-        '❌ Submission cancelled. Item No. already exists in R&D/Stock list.' : 
-        '❌ Submission cancelled. Entry already exists in Generation Log.';
+    let message;
+    if (isSpecialDuplicate) {
+        const salesOrder = document.getElementById('salesOrder').value.trim();
+        if (salesOrder === '999999') {
+            message = '❌ Submission cancelled. Item No. already exists in R&D list.';
+        } else if (salesOrder === '000000') {
+            message = '❌ Submission cancelled. Item No. already exists in Stock list.';
+        } else if (salesOrder === '888888') {
+            message = '❌ Submission cancelled. Item No. already exists in Sample list.';
+        }
+    } else {
+        message = '❌ Submission cancelled. Entry already exists in Collection.';
+    }
+    
     showStatus(message, 'info');
     
     // Highlight the problematic fields
@@ -1987,7 +2022,7 @@ function resetForm() {
     
     const inputs = document.querySelectorAll('input, select');
     inputs.forEach(input => {
-        input.classList.remove('valid', 'invalid', 'rd-field', 'stock-field', 'trailing-space-highlight');
+        input.classList.remove('valid', 'invalid', 'rd-field', 'stock-field', 'sample-field', 'trailing-space-highlight');
     });
     
     // Reset special info displays
@@ -2006,7 +2041,7 @@ function resetForm() {
     
     currentQRDataUrl = null;
     trailingSpaceFields = [];
-    isRDStockDuplicate = false;
+    isSpecialDuplicate = false;
     
     // Reset individual counters
     document.getElementById('salesOrderCombinedCounter').textContent = '';
