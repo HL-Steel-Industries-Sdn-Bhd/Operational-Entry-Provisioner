@@ -1922,7 +1922,8 @@ function validateItemNoOnBlur() {
         return true;
     }
     
-    const regex = /^\d+[A-Za-z]?$/;
+    // ===== 改动在这里：A-Za-z 改为 A-Z =====
+    const regex = /^\d+[A-Z]?$/;
     
     if (regex.test(value) && !/^[A-Za-z]/.test(value)) {
         input.classList.add('valid');
@@ -1931,7 +1932,7 @@ function validateItemNoOnBlur() {
     } else {
         input.classList.add('invalid');
         input.classList.remove('valid');
-        alert('Invalid Item No. format.\n\nPlease enter:\n• Numbers only (e.g., 100)\n• OR Numbers + 1 letter at the end (e.g., 100A)\n\nNot allowed: A100, A, or other formats');
+        alert('Invalid Item No. format.\n\nPlease enter:\n• Numbers only (e.g., 100)\n• OR Numbers + 1 UPPERCASE letter at the end (e.g., 100A)\n\nNot allowed: lowercase letters (e.g., 100a), A100, or other formats');
         return false;
     }
 }
